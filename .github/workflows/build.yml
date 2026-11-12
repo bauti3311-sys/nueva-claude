@@ -1,0 +1,41 @@
+name: Compilar APK
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar proyecto
+        run: |
+          mkdir -p work
+          if [ -f SpotlightNext-proyecto.zip ]; then
+            unzip -q -o SpotlightNext-proyecto.zip -d work
+          else
+            echo "Falta SpotlightNext-proyecto.zip en la raíz del repositorio"; exit 1
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Compilar
+        working-directory: work
+        run: gradle assembleRelease --no-daemon
+
+      - name: Renombrar APK
+        run: cp work/app/build/outputs/apk/release/app-release.apk SpotlightNext-nativa.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SpotlightNext-APK
+          path: SpotlightNext-nativa.apk
+          
